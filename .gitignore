@@ -2,6 +2,3 @@
 vendor/*
 .phpunit.cache/
 .idea/*
-/src/includs/open_sybase_config.php
-/src/uni/class/oracle/test/*
-
