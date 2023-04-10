@@ -7,7 +7,7 @@
         let search_date = card.release_date || card.first_air_date || card.last_air_date || '0000';
         let search_year = parseInt((search_date + '').slice(0, 4));
         let orig = card.original_title || card.original_name;
-        let kp_prox = 'https://api.allorigins.win/get?callback=myFunc&url=';
+        let kp_prox = 'https://api.allorigins.win/get?url=';
         let params = {
             id: card.id,
             url: kp_prox + 'https://kinopoiskapiunofficial.tech/',
