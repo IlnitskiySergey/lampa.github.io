@@ -2,13 +2,13 @@
     'use strict';
 
     function rating_kp_imdb(card) {
-        var network = new Lampa.Reguest();
-        var clean_title = card.title.replace(/[\s.,:;!?]+/g, ' ').trim();
-        var search_date = card.release_date || card.first_air_date || card.last_air_date || '0000';
-        var search_year = parseInt((search_date + '').slice(0, 4));
-        var orig = card.original_title || card.original_name;
-        var kp_prox = '';
-        var params = {
+        let network = new Lampa.Reguest();
+        let clean_title = card.title.replace(/[\s.,:;!?]+/g, ' ').trim();
+        let search_date = card.release_date || card.first_air_date || card.last_air_date || '0000';
+        let search_year = parseInt((search_date + '').slice(0, 4));
+        let orig = card.original_title || card.original_name;
+        let kp_prox = 'https://cors-anywhere.herokuapp.com/';
+        let params = {
             id: card.id,
             url: kp_prox + 'https://kinopoiskapiunofficial.tech/',
             rating_url: kp_prox + 'https://rating.kinopoisk.ru/',
@@ -20,7 +20,7 @@
         getRating();
 
         function getRating() {
-            var movieRating = _getCache(params.id);
+            let movieRating = _getCache(params.id);
             if (movieRating) {
                 return _showRating(movieRating[params.id]);
             } else {
@@ -29,8 +29,8 @@
         }
 
         function searchFilm() {
-            var url = params.url;
-            var url_by_title = Lampa.Utils.addUrlComponent(url + 'api/v2.1/films/search-by-keyword', 'keyword=' + encodeURIComponent(clean_title));
+            let url = params.url;
+            let url_by_title = Lampa.Utils.addUrlComponent(url + 'api/v2.1/films/search-by-keyword', 'keyword=' + encodeURIComponent(clean_title));
             if (card.imdb_id) url = Lampa.Utils.addUrlComponent(url + 'api/v2.2/films', 'imdbId=' + encodeURIComponent(card.imdb_id));
             else url = url_by_title;
             network.clear();
@@ -41,9 +41,9 @@
                 else if (url !== url_by_title) {
                     network.clear();
                     network.timeout(15000);
-                    network.silent(url_by_title, function (json) {
-                        if (json.items && json.items.length) chooseFilm(json.items);
-                        else if (json.films && json.films.length) chooseFilm(json.films);
+                    network.silent(url_by_title, function (json_title) {
+                        if (json_title.items && json_title.items.length) chooseFilm(json_title.items);
+                        else if (json_title.films && json_title.films.length) chooseFilm(json_title.films);
                         else chooseFilm([]);
                     }, function (a, c) {
                         Lampa.Noty.show('Рейтинг KP   ' + network.errorDecode(a, c));
@@ -60,9 +60,9 @@
 
         function chooseFilm(items) {
             if (items && items.length) {
-                var is_sure = false;
+                let is_sure = false;
                 if (card.imdb_id) {
-                    var tmp = items.filter(function (elem) {
+                    let tmp = items.filter(function (elem) {
                         return (elem.imdb_id || elem.imdbId) == card.imdb_id;
                     });
                     if (tmp.length) {
@@ -70,14 +70,14 @@
                         is_sure = true;
                     }
                 }
-                var cards = items.filter(function (c) {
-                    var year = c.start_date || c.year || '0000';
+                let cards = items.filter(function (c) {
+                    let year = c.start_date || c.year || '0000';
                     c.tmp_year = parseInt((year + '').slice(0, 4));
                     return !c.tmp_year || !search_year || c.tmp_year > search_year - 2 && c.tmp_year < search_year + 2;
                 });
                 if (cards.length) {
                     if (orig) {
-                        var _tmp = cards.filter(function (elem) {
+                        let _tmp = cards.filter(function (elem) {
                             return equalTitle(elem.orig_title || elem.nameOriginal || elem.en_title || elem.nameEn || elem.ru_title || elem.nameRu, orig);
                         });
                         if (_tmp.length) {
@@ -86,7 +86,7 @@
                         }
                     }
                     if (card.title) {
-                        var _tmp2 = cards.filter(function (elem) {
+                        let _tmp2 = cards.filter(function (elem) {
                             return equalTitle(elem.title || elem.ru_title || elem.nameRu || elem.en_title || elem.nameEn || elem.orig_title || elem.nameOriginal, card.title);
                         });
                         if (_tmp2.length) {
@@ -95,21 +95,21 @@
                         }
                     }
                     if (cards.length > 1 && search_year) {
-                        var _tmp3 = cards.filter(function (c) {
-                            return c.tmp_year == search_year;
+                        let _tmp3 = cards.filter(function (c) {
+                            return c.tmp_year === search_year;
                         });
                         if (_tmp3.length) cards = _tmp3;
                     }
                 } else {
                     cards = items;
                 }
-                if (cards.length == 1 && is_sure) {
-                    var id = cards[0].kp_id || cards[0].kinopoiskId || cards[0].filmId;
-                    var base_search = function base_search() {
+                if (cards.length === 1 && is_sure) {
+                    let id = cards[0].kp_id || cards[0].kinopoiskId || cards[0].filmId;
+                    let base_search = function base_search() {
                         network.clear();
                         network.timeout(15000);
                         network.silent(params.url + 'api/v2.2/films/' + id, function (data) {
-                            var movieRating = _setCache(params.id, {
+                            let movieRating = _setCache(params.id, {
                                 kp: data.ratingKinopoisk,
                                 imdb: data.ratingImdb,
                                 timestamp: new Date().getTime()
@@ -126,18 +126,18 @@
                     network["native"](params.rating_url + id + '.xml', function (str) {
                         if (str.indexOf('<rating>') >= 0) {
                             try {
-                                var ratingKinopoisk = 0;
-                                var ratingImdb = 0;
-                                var xml = $($.parseXML(str));
-                                var kp_rating = xml.find('kp_rating');
+                                let ratingKinopoisk = 0;
+                                let ratingImdb = 0;
+                                let xml = $($.parseXML(str));
+                                let kp_rating = xml.find('kp_rating');
                                 if (kp_rating.length) {
                                     ratingKinopoisk = parseFloat(kp_rating.text());
                                 }
-                                var imdb_rating = xml.find('imdb_rating');
+                                let imdb_rating = xml.find('imdb_rating');
                                 if (imdb_rating.length) {
                                     ratingImdb = parseFloat(imdb_rating.text());
                                 }
-                                var movieRating = _setCache(params.id, {
+                                let movieRating = _setCache(params.id, {
                                     kp: ratingKinopoisk,
                                     imdb: ratingImdb,
                                     timestamp: new Date().getTime()
@@ -153,7 +153,7 @@
                         dataType: 'text'
                     });
                 } else {
-                    var movieRating = _setCache(params.id, {
+                    let movieRating = _setCache(params.id, {
                         kp: 0,
                         imdb: 0,
                         timestamp: new Date().getTime()
@@ -161,7 +161,7 @@
                     return _showRating(movieRating);
                 }
             } else {
-                var _movieRating = _setCache(params.id, {
+                let _movieRating = _setCache(params.id, {
                     kp: 0,
                     imdb: 0,
                     timestamp: new Date().getTime()
@@ -175,8 +175,8 @@
         }
 
         function _getCache(movie) {
-            var timestamp = new Date().getTime();
-            var cache = Lampa.Storage.cache('kp_rating', 500, {}); //500 это лимит ключей
+            let timestamp = new Date().getTime();
+            let cache = Lampa.Storage.cache('kp_rating', 500, {}); //500 это лимит ключей
             if (cache[movie]) {
                 if ((timestamp - cache[movie].timestamp) > params.cache_time) {
                     // Если кеш истёк, чистим его
@@ -189,8 +189,8 @@
         }
 
         function _setCache(movie, data) {
-            var timestamp = new Date().getTime();
-            var cache = Lampa.Storage.cache('kp_rating', 500, {}); //500 это лимит ключей
+            let timestamp = new Date().getTime();
+            let cache = Lampa.Storage.cache('kp_rating', 500, {}); //500 это лимит ключей
             if (!cache[movie]) {
                 cache[movie] = data;
                 Lampa.Storage.set('kp_rating', cache);
@@ -206,9 +206,9 @@
 
         function _showRating(data, movie) {
             if (data) {
-                var kp_rating = !isNaN(data.kp) && data.kp !== null ? parseFloat(data.kp).toFixed(1) : '0.0';
-                var imdb_rating = !isNaN(data.imdb) && data.imdb !== null ? parseFloat(data.imdb).toFixed(1) : '0.0';
-                var render = Lampa.Activity.active().activity.render();
+                let kp_rating = !isNaN(data.kp) && data.kp !== null ? parseFloat(data.kp).toFixed(1) : '0.0';
+                let imdb_rating = !isNaN(data.imdb) && data.imdb !== null ? parseFloat(data.imdb).toFixed(1) : '0.0';
+                let render = Lampa.Activity.active().activity.render();
                 $('.wait_rating', render).remove();
                 $('.rate--imdb', render).removeClass('hide').find('> div').eq(0).text(imdb_rating);
                 $('.rate--kp', render).removeClass('hide').find('> div').eq(0).text(kp_rating);
@@ -219,8 +219,8 @@
     function startPlugin() {
         window.rating_plugin = true;
         Lampa.Listener.follow('full', function (e) {
-            if (e.type == 'complite') {
-                var render = e.object.activity.render();
+            if (e.type === 'complite') {
+                let render = e.object.activity.render();
                 if ($('.rate--kp', render).hasClass('hide') && !$('.wait_rating', render).length) {
                     $('.info__rate', render).after('<div style="width:2em;margin-top:1em;margin-right:1em" class="wait_rating"><div class="broadcast__scan"><div></div></div><div>');
                     rating_kp_imdb(e.data.movie);
